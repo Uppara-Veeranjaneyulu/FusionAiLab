@@ -1,7 +1,9 @@
 // app/Provider.jsx
 "use client";
 
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { AppSidebar } from "./_components/AppSidebar";
 
 export default function Provider({ children, ...props }) {
   return (
@@ -12,7 +14,12 @@ export default function Provider({ children, ...props }) {
       disableTransitionOnChange
       {...props}
     >
-      {children}
+      <SidebarProvider>
+        <AppSidebar/>
+        <SidebarTrigger />
+        <div>{children}</div>
+      </SidebarProvider>
+      
     </NextThemesProvider>
   );
 }
