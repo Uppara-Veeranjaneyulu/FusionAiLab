@@ -4,6 +4,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { AppSidebar } from "./_components/AppSidebar";
+import AppHeader from "./_components/AppHeader";
 
 export default function Provider({ children, ...props }) {
   return (
@@ -15,11 +16,13 @@ export default function Provider({ children, ...props }) {
       {...props}
     >
       <SidebarProvider>
-        <AppSidebar/>
-        <SidebarTrigger />
-        <div>{children}</div>
+        <AppSidebar />
+
+
+        <div className="w-full">
+          <AppHeader />{children}</div>
       </SidebarProvider>
-      
+
     </NextThemesProvider>
   );
 }
