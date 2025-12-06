@@ -35,8 +35,8 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <div className={'p-3'}>
-          <h2 className="font-bold text-lg">Chat</h2>
-          <p className="text-sm text-gray-400">Sign in to start chatting with multiple AI model</p>
+            <h2 className="font-bold text-lg">Chat</h2>
+            <p className="text-sm text-gray-400">Sign in to start chatting with multiple AI model</p>
           </div>
         </SidebarGroup>
 
