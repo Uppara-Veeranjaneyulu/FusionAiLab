@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
-import { Moon } from "lucide-react"
-import { Ghost, Sun } from "lucide-react"
+import { Moon, User2, Zap } from "lucide-react"
+import { Sun } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -11,9 +11,14 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
+import { SignInButton } from "@clerk/nextjs"
+import { useUser } from "@clerk/nextjs"
+import UsageCreditProgress from "./UsageCreditProgress"
+
 
 export function AppSidebar() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
+  const { user } = useUser();
   return (
     <Sidebar>
       <SidebarHeader>
@@ -25,25 +30,40 @@ export function AppSidebar() {
               <h2 className="font-bold text-xl">AI Fusion</h2>
             </div>
             <div>
-              {theme == 'light' ? <Button variant={Ghost} onClick={() => setTheme('dark')}><Sun /></Button>
-                : <Button variant={Ghost} onClick={() => setTheme('light')}><Moon /></Button>}
+              {theme === 'light' ? <Button variant="ghost" onClick={() => setTheme('dark')}><Sun /></Button>
+                : <Button variant="ghost" onClick={() => setTheme('light')}><Moon /></Button>}
             </div>
           </div>
-          <Button className='mt-7 w-full' size="lg">+ New Chat</Button>
+          {user ?
+            <Button className='mt-7 w-full' size="lg">+ New Chat</Button> :
+            <SignInButton>
+              <Button className='mt-7 w-full' size="lg">+ New Chat</Button>
+            </SignInButton>}
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <div className={'p-3'}>
             <h2 className="font-bold text-lg">Chat</h2>
-            <p className="text-sm text-gray-400">Sign in to start chatting with multiple AI model</p>
+            {!user && <p className="text-sm text-gray-400">Sign in to start chatting with multiple AI model</p>}
           </div>
         </SidebarGroup>
 
       </SidebarContent>
       <SidebarFooter>
         <div className="p-3 mb-10">
-          <Button className={'w-full'} size={'lg'}>Sign In/Sign Up</Button>
+          {!user ? <SignInButton mode="modal">
+            <Button className={'w-full'} size={'lg'}>Sign In/Sign Up</Button>
+          </SignInButton>
+            :
+            <div>
+              <UsageCreditProgress />
+              <Button className={'w-full mb-3'}> <Zap />Upgrade Plan</Button>
+              <Button className="flex" variant={'ghost'}>
+                <User2 /> <h2>Settings</h2>
+              </Button>
+            </div>
+          }
         </div>
       </SidebarFooter>
     </Sidebar>
