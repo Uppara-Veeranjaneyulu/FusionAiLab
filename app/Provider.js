@@ -7,11 +7,12 @@ import { AppSidebar } from "./_components/AppSidebar";
 import AppHeader from "./_components/AppHeader";
 import { useUser } from "@clerk/nextjs";
 import { db } from "@/config/FirebaseConfig";
-import { getDoc, setDoc, doc } from "firebase/firestore";
+import { getDoc, setDoc, doc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
 import { DefaultModel } from "@/shared/AiModelsShared";
 import { UserDetailContext } from "@/context/UserDetailContext";
+
 
 
 export default function Provider({ children, ...props }) {
@@ -19,11 +20,32 @@ export default function Provider({ children, ...props }) {
   const { user } = useUser();
   const [aiSelectedModels, setAiSelectedModels] = useState(DefaultModel);
   const [UserDetail, setUserDetail] = useState();
+  const [messages, setMessages] = useState({});
   useEffect(() => {
     if (user) {
       CreateNewUser();
     }
   }, [user])
+
+  useEffect(() => {
+    if (aiSelectedModels) {
+      updateAIModelSelectionPref();
+    }
+  }, [aiSelectedModels]);
+
+  const updateAIModelSelectionPref = async () => {
+    if (user?.primaryEmailAddress?.emailAddress) {
+      const docRef = doc(db, "users", user.primaryEmailAddress.emailAddress);
+      try {
+        await updateDoc(docRef, {
+          selectedModelPref: aiSelectedModels
+        });
+      } catch (error) {
+        console.error("Error updating Firebase:", error);
+      }
+    }
+  }
+
   const CreateNewUser = async () => {
     //if user exist?
     const userRef = doc(db, "users", user?.primaryEmailAddress?.emailAddress);
@@ -32,7 +54,7 @@ export default function Provider({ children, ...props }) {
     if (userSnap.exists()) {
       console.log('Existing User');
       const userInfo = userSnap.data();
-      setAiSelectedModels(userInfo?.selectedModelPref);
+      setAiSelectedModels(userInfo?.selectedModelPref ?? DefaultModel);
       setUserDetail(userInfo);
       return;
     } else {
@@ -59,7 +81,7 @@ export default function Provider({ children, ...props }) {
       enableSystem
       disableTransitionOnChange>
       <UserDetailContext.Provider value={{ UserDetail, setUserDetail }}>
-        <AiSelectedModelContext.Provider value={{ aiSelectedModels, setAiSelectedModels }}>
+        <AiSelectedModelContext.Provider value={{ aiSelectedModels, setAiSelectedModels, messages, setMessages }}>
 
           <SidebarProvider>
             <AppSidebar />
