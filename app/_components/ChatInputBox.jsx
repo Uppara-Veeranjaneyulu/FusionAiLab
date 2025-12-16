@@ -11,23 +11,24 @@ import { db } from "@/config/FirebaseConfig";
 import { useUser } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
 import { getDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 
- 
+
 function ChatInputBox() {
   const [userInput, setUserInput] = useState();
   const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
   const [chatId, setChatId] = useState();
   const params = useSearchParams();
   const { user } = useUser();
- 
+
 
   useEffect(() => {
-    const chatId_=params.get('chatId')
+    const chatId_ = params.get('chatId')
     if (chatId_) {
       setChatId(chatId_);
       GetMessages(chatId_);
     }
-    else {  
+    else {
       setMessages([]);
       setChatId(uuidv4())
     }
@@ -36,6 +37,21 @@ function ChatInputBox() {
 
   const handleSend = async () => {
     if (!userInput.trim()) return;
+
+
+    //Call only if user is free
+    //deduct and check token limit
+    const result = await axios.post('/api/user-remaining-msg', {
+      token: 1
+    });
+
+
+    const reminingToken = result?.data?.remainingToken;
+    if (reminingToken <= 0) {
+      console.log("Limit Exceed");
+      toast.error('Maximum daily limit reached')
+      return;
+    }
 
     // 1️⃣ Add user message to all enabled models
     setMessages((prev) => {
@@ -131,7 +147,7 @@ function ChatInputBox() {
   }
 
   // const GetMessages = async () => {
-    
+
   //   console.log("INSIDE",chatId)
   //   const docRef = doc(db, 'chatHistory', chatId);
   //   const docSnap = await getDoc(docRef);
@@ -141,18 +157,18 @@ function ChatInputBox() {
   // }
 
   const GetMessages = async (id) => {
-  if (!id) return; // ✅ safety guard
+    if (!id) return; // ✅ safety guard
 
-  const docRef = doc(db, 'chatHistory', id);
-  const docSnap = await getDoc(docRef);
+    const docRef = doc(db, 'chatHistory', id);
+    const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    setMessages(docSnap.data().messages || {});
-  } else {
-    setMessages({});
-    setChatId(null); // do NOT auto-create here
-  }
-};
+    if (docSnap.exists()) {
+      setMessages(docSnap.data().messages || {});
+    } else {
+      setMessages({});
+      setChatId(null); // do NOT auto-create here
+    }
+  };
 
 
   return (
