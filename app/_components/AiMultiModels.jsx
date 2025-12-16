@@ -21,12 +21,15 @@ import { useUser } from "@clerk/nextjs";
 import { doc, updateDoc } from "firebase/firestore";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from 'remark-gfm'
+import { useSearchParams } from "next/navigation";
 
 function AiMultiModels() {
     const { user } = useUser();
     const [aiModelList, setAiModelList] = useState(AiModelList);
 
     const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
+
+
 
     console.log("aiSelectedModels", aiSelectedModels);
 
@@ -138,7 +141,7 @@ function AiMultiModels() {
                                     <div className="flex gap-3 items-center">
                                         {m.content == 'loading' && <><Loader className="animate-spin" /><span>Thinking...</span></>}</div>
                                     {m.content !== 'loading' &&
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        m?.content && <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {m.content}
                                         </ReactMarkdown>
                                     }

@@ -1,16 +1,38 @@
-
 import { Button } from '@/components/ui/button'
 import { Mic, Paperclip, Send } from 'lucide-react'
 import React, { useContext, useEffect, useState } from 'react'
 import AiMultiModels from './AiMultiModels'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { setDoc } from 'firebase/firestore';
+import { doc } from "firebase/firestore";
+import { db } from "@/config/FirebaseConfig";
+import { useUser } from '@clerk/nextjs';
+import { useSearchParams } from 'next/navigation';
+import { getDoc } from 'firebase/firestore';
 
-
-
+ 
 function ChatInputBox() {
   const [userInput, setUserInput] = useState();
   const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
+  const [chatId, setChatId] = useState();
+  const params = useSearchParams();
+  const { user } = useUser();
+ 
+
+  useEffect(() => {
+    const chatId_=params.get('chatId')
+    if (chatId_) {
+      setChatId(chatId_);
+      GetMessages(chatId_);
+    }
+    else {  
+      setMessages([]);
+      setChatId(uuidv4())
+    }
+
+  }, [params])
 
   const handleSend = async () => {
     if (!userInput.trim()) return;
@@ -19,11 +41,12 @@ function ChatInputBox() {
     setMessages((prev) => {
       const updated = { ...prev };
       Object.keys(aiSelectedModels).forEach((modelKey) => {
-        if(aiSelectedModels[modelKey].enable){
-        updated[modelKey] = [
-          ...(updated[modelKey] ?? []),
-          { role: "user", content: userInput },
-        ];}
+        if (aiSelectedModels[modelKey].enable) {
+          updated[modelKey] = [
+            ...(updated[modelKey] ?? []),
+            { role: "user", content: userInput },
+          ];
+        }
       });
       return updated;
     });
@@ -33,7 +56,7 @@ function ChatInputBox() {
 
     // 2️⃣ Fetch response from each enabled model
     Object.entries(aiSelectedModels).forEach(async ([parentModel, modelInfo]) => {
-      if (!modelInfo.modelId || aiSelectedModels[parentModel].enable==false) return;
+      if (!modelInfo.modelId || aiSelectedModels[parentModel].enable == false) return;
 
       // Add loading placeholder before API call
       setMessages((prev) => ({
@@ -91,8 +114,46 @@ function ChatInputBox() {
   };
 
   useEffect(() => {
-    console.log(messages);
+    if (messages) {
+      SaveMessages();
+    }
   }, [messages])
+
+  const SaveMessages = async () => {
+    const docRef = doc(db, "chatHistory", chatId);
+
+    await setDoc(docRef, {
+      chatId: chatId,
+      userEmail: user?.primaryEmailAddress?.emailAddress,
+      messages: messages,
+      lastUpdated: Date.now()
+    })
+  }
+
+  // const GetMessages = async () => {
+    
+  //   console.log("INSIDE",chatId)
+  //   const docRef = doc(db, 'chatHistory', chatId);
+  //   const docSnap = await getDoc(docRef);
+  //   console.log(docSnap.data())
+  //   const docData=docSnap.data();
+  //   setMessages(docData.messages);
+  // }
+
+  const GetMessages = async (id) => {
+  if (!id) return; // ✅ safety guard
+
+  const docRef = doc(db, 'chatHistory', id);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    setMessages(docSnap.data().messages || {});
+  } else {
+    setMessages({});
+    setChatId(null); // do NOT auto-create here
+  }
+};
+
 
   return (
     <div className='relative min-h-screen'>
@@ -128,4 +189,3 @@ function ChatInputBox() {
 }
 
 export default ChatInputBox
-
