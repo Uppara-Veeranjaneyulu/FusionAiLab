@@ -1,40 +1,64 @@
-<<<<<<< HEAD
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🚀 AI Fusion – Multi-Model AI Chat SaaS
 
-## Getting Started
+AI Fusion is a **full-stack Multi-AI Chat SaaS application** built with **Next.js**, **React**, **ArcJet**, and **CodeRabbit**.  
+It allows users to chat with **multiple AI models (GPT, Gemini, Claude, etc.)** in a single secure, scalable platform.
 
-First, run the development server:
+By following this project, you’ll learn how to design and deploy a **production-ready AI SaaS application** with authentication, rate limiting, and real-world best practices.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Features
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- 🤖 **Multi-AI Model Integration**
+  - Chat with GPT, Gemini, Claude, and more in one app
+- 🔐 **Authentication & User Management**
+  - Secure login using Clerk
+- ⚡ **Rate Limiting & Security**
+  - ArcJet token-bucket rate limiting per user
+- 🧠 **AI-Powered Code Reviews**
+  - CodeRabbit integration for smarter development
+- 📊 **Usage Tracking**
+  - Free plan message limits with live usage progress
+- 🌗 **Dark / Light Mode**
+- 🧩 **Modern UI**
+  - Built using ShadCN UI + Radix
+- 🚀 **Production-Ready Architecture**
+  - Scalable, secure, and SaaS-friendly
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠 Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+**Frontend**
+- Next.js (App Router)
+- React
+- Tailwind CSS
+- ShadCN UI
+- Radix UI
+- Lucide Icons
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Backend**
+- Next.js API Routes
+- Firebase Firestore
+- ArcJet (Rate Limiting & Security)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Authentication**
+- Clerk
 
-## Deploy on Vercel
+**AI & Developer Tools**
+- Multiple AI Models (GPT, Gemini, Claude, etc.)
+- CodeRabbit (AI code reviews)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-# FusionAiLab
->>>>>>> 2217c3b7aae173a82c338d063df458f9a601c8f6
+## 📁 Project Structure
+
+```text
+app/
+ ├─ api/                # API routes (chat, rate limit, usage)
+ ├─ components/         # Reusable UI components
+ ├─ config/             # Firebase & app config
+ ├─ lib/                # ArcJet & utilities
+ ├─ context/            # Global state
+ ├─ page.jsx            # Main app page
+ └─ layout.jsx          # Root layout
