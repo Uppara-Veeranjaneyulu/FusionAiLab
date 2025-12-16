@@ -1,71 +1,185 @@
-"use client"
-import Image from "next/image"
-import { Moon, User2, Zap } from "lucide-react"
-import { Sun } from "lucide-react"
+"use client";
+
+import Image from "next/image";
+import { Moon, Sun, User2, Zap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { useTheme } from "next-themes"
-import { SignInButton } from "@clerk/nextjs"
-import { useUser } from "@clerk/nextjs"
-import UsageCreditProgress from "./UsageCreditProgress"
-
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import UsageCreditProgress from "./UsageCreditProgress";
+import { getDocs, query, where, collection } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import moment from "moment";
+import { db } from "@/config/FirebaseConfig";
+import Link from "next/link";
+import { v4 as uuidv4 } from "uuid";
 
 export function AppSidebar() {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
+  const [chatHistory, setChatHistory] = useState([]);
+
+  /* ---------------- Fetch chat history ---------------- */
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress) {
+      getChatHistory();
+    }
+  }, [user]);
+
+  const getChatHistory = async () => {
+    const q = query(
+      collection(db, "chatHistory"),
+      where(
+        "userEmail",
+        "==",
+        user.primaryEmailAddress.emailAddress
+      )
+    );
+
+    
+
+
+    const snapshot = await getDocs(q);
+
+    // ✅ set state ONCE (not inside forEach)
+    const chats = snapshot.docs
+      .map((doc) => doc.data())
+      .sort((a, b) => b.lastUpdated - a.lastUpdated);
+
+    setChatHistory(chats);
+  };
+
+  /* ---------------- Safe preview helper ---------------- */
+  const getLastUserMessageFromChat = (chat) => {
+    if (!chat?.messages) {
+      return {
+        message: "New Chat",
+        lastMsgDate: moment(chat?.lastUpdated || Date.now()).fromNow(),
+      };
+    }
+
+    const allMessages = Object.values(chat.messages).flat();
+    const userMessages = allMessages.filter(
+      (msg) => msg.role === "user"
+    );
+
+    const lastUserMsg =
+      userMessages.length > 0
+        ? userMessages[userMessages.length - 1].content
+        : "New Chat";
+
+    return {
+      message: lastUserMsg,
+      lastMsgDate: moment(chat.lastUpdated || Date.now()).fromNow(),
+    };
+  };
+
   return (
     <Sidebar>
+      {/* ---------------- Header ---------------- */}
       <SidebarHeader>
         <div className="p-3">
-          <div className="p-3 flex justify-between items-center
-        ">
+          <div className="flex justify-between items-center p-3">
             <div className="flex items-center gap-3">
-              <Image src={'/logo.svg'} alt='logo' width={60} height={260} className="w-[40px] h-[40px]" />
+              <Image
+                src="/logo.svg"
+                alt="logo"
+                width={40}
+                height={40}
+              />
               <h2 className="font-bold text-xl">AI Fusion</h2>
             </div>
-            <div>
-              {theme === 'light' ? <Button variant="ghost" onClick={() => setTheme('dark')}><Sun /></Button>
-                : <Button variant="ghost" onClick={() => setTheme('light')}><Moon /></Button>}
-            </div>
+
+            <Button
+              variant="ghost"
+              onClick={() =>
+                setTheme(theme === "light" ? "dark" : "light")
+              }
+            >
+              {theme === "light" ? <Sun /> : <Moon />}
+            </Button>
           </div>
-          {user ?
-            <Button className='mt-7 w-full' size="lg">+ New Chat</Button> :
+
+          {user ? (
+            <Link href={'/'}>
+              <Button className="mt-7 w-full" size="lg">
+                + New Chat
+              </Button>
+            </Link>
+          ) : (
             <SignInButton>
-              <Button className='mt-7 w-full' size="lg">+ New Chat</Button>
-            </SignInButton>}
+              <Button className="mt-7 w-full" size="lg">
+                + New Chat
+              </Button>
+            </SignInButton>
+          )}
         </div>
       </SidebarHeader>
+
+      {/* ---------------- Content ---------------- */}
       <SidebarContent>
         <SidebarGroup>
-          <div className={'p-3'}>
+          <div className="p-3">
             <h2 className="font-bold text-lg">Chat</h2>
-            {!user && <p className="text-sm text-gray-400">Sign in to start chatting with multiple AI model</p>}
+
+            {!user && (
+              <p className="text-sm text-gray-400">
+                Sign in to start chatting with multiple AI models
+              </p>
+            )}
+
+            {chatHistory.map((chat) => {
+              const preview = getLastUserMessageFromChat(chat);
+
+              return (
+                <Link
+                  key={chat.chatId}
+                  href={`/?chatId=${chat.chatId}`}
+                >
+                  <div className="hover:bg-green-400 p-3 cursor-pointer rounded-md">
+                    <p className="text-sm text-gray-400">
+                      {preview.lastMsgDate}
+                    </p>
+                    <p className="text-lg line-clamp-1">
+                      {preview.message}
+                    </p>
+                  </div>
+                  <hr className="my-2" />
+                </Link>
+              );
+            })}
           </div>
         </SidebarGroup>
-
       </SidebarContent>
+
+      {/* ---------------- Footer ---------------- */}
       <SidebarFooter>
         <div className="p-3 mb-10">
-          {!user ? <SignInButton mode="modal">
-            <Button className={'w-full'} size={'lg'}>Sign In/Sign Up</Button>
-          </SignInButton>
-            :
+          {!user ? (
+            <SignInButton mode="modal">
+              <Button className="w-full" size="lg">
+                Sign In / Sign Up
+              </Button>
+            </SignInButton>
+          ) : (
             <div>
               <UsageCreditProgress />
-              <Button className={'w-full mb-3'}> <Zap />Upgrade Plan</Button>
-              <Button className="flex" variant={'ghost'}>
-                <User2 /> <h2>Settings</h2>
+              <Button className="w-full mb-3">
+                <Zap /> Upgrade Plan
+              </Button>
+              <Button variant="ghost" className="flex gap-2">
+                <User2 /> Settings
               </Button>
             </div>
-          }
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
