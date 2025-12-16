@@ -14,23 +14,33 @@ import { useTheme } from "next-themes";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import UsageCreditProgress from "./UsageCreditProgress";
 import { getDocs, query, where, collection } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import moment from "moment";
 import { db } from "@/config/FirebaseConfig";
 import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
+import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
 
 export function AppSidebar() {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const [chatHistory, setChatHistory] = useState([]);
+  const [freeMsgCount, setFreeMsgCount] = useState(0);
+
+    const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
 
   /* ---------------- Fetch chat history ---------------- */
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress) {
       getChatHistory();
+      user && GetRemainingTokenMsgs();
     }
   }, [user]);
+
+  useEffect(() => {
+    GetRemainingTokenMsgs();
+  },[messages])
 
   const getChatHistory = async () => {
     const q = query(
@@ -42,7 +52,7 @@ export function AppSidebar() {
       )
     );
 
-    
+
 
 
     const snapshot = await getDocs(q);
@@ -54,6 +64,8 @@ export function AppSidebar() {
 
     setChatHistory(chats);
   };
+
+
 
   /* ---------------- Safe preview helper ---------------- */
   const getLastUserMessageFromChat = (chat) => {
@@ -79,6 +91,12 @@ export function AppSidebar() {
       lastMsgDate: moment(chat.lastUpdated || Date.now()).fromNow(),
     };
   };
+
+  const GetRemainingTokenMsgs = async () => {
+    const result = await axios.post('/api/user-remaining-msg');
+    console.log(result);
+    setFreeMsgCount(result?.data?.remainingToken);
+  } 
 
   return (
     <Sidebar>
@@ -169,12 +187,12 @@ export function AppSidebar() {
             </SignInButton>
           ) : (
             <div>
-              <UsageCreditProgress />
+              <UsageCreditProgress remainingToken={freeMsgCount}/>
               <Button className="w-full mb-3">
                 <Zap /> Upgrade Plan
               </Button>
               <Button variant="ghost" className="flex gap-2">
-                <User2 /> Settings
+                <User2 /> <h2>Settings</h2>
               </Button>
             </div>
           )}
