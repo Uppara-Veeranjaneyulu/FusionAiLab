@@ -21,6 +21,10 @@ import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
+import PricingModel from "./PricingModel";
+import { useAuth } from "@clerk/nextjs";
+
+
 
 export function AppSidebar() {
   const { theme, setTheme } = useTheme();
@@ -28,7 +32,17 @@ export function AppSidebar() {
   const [chatHistory, setChatHistory] = useState([]);
   const [freeMsgCount, setFreeMsgCount] = useState(0);
 
-    const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
+  const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
+
+  const { has } = useAuth();
+
+  // const paidUser = has({ plan: 'unlimited_plan' });
+
+
+
+
+
+  // const paidUser = has({ plan: 'unlimited_plan' });
 
   /* ---------------- Fetch chat history ---------------- */
   useEffect(() => {
@@ -40,7 +54,7 @@ export function AppSidebar() {
 
   useEffect(() => {
     GetRemainingTokenMsgs();
-  },[messages])
+  }, [messages])
 
   const getChatHistory = async () => {
     const q = query(
@@ -96,7 +110,7 @@ export function AppSidebar() {
     const result = await axios.post('/api/user-remaining-msg');
     console.log(result);
     setFreeMsgCount(result?.data?.remainingToken);
-  } 
+  }
 
   return (
     <Sidebar>
@@ -179,23 +193,28 @@ export function AppSidebar() {
       {/* ---------------- Footer ---------------- */}
       <SidebarFooter>
         <div className="p-3 mb-10">
-          {!user ? (
+          {!user ?
             <SignInButton mode="modal">
               <Button className="w-full" size="lg">
                 Sign In / Sign Up
               </Button>
             </SignInButton>
-          ) : (
+            :
             <div>
-              <UsageCreditProgress remainingToken={freeMsgCount}/>
-              <Button className="w-full mb-3">
-                <Zap /> Upgrade Plan
-              </Button>
-              <Button variant="ghost" className="flex gap-2">
+              {!has({ plan: 'unlimited_plan' }) &&
+                <div>
+                  <UsageCreditProgress remainingToken={freeMsgCount} />
+                  <PricingModel>
+                    <Button className="w-full mb-3">
+                      <Zap /> Upgrade Plan
+                    </Button>
+                  </PricingModel>
+                </div>}
+              <Button variant={'ghost'} className="flex ">
                 <User2 /> <h2>Settings</h2>
               </Button>
             </div>
-          )}
+          }
         </div>
       </SidebarFooter>
     </Sidebar>
