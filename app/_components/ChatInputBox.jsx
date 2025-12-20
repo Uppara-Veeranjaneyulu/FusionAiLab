@@ -12,6 +12,7 @@ import { useUser } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
 import { getDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { useAuth } from '@clerk/nextjs';
 
 
 function ChatInputBox() {
@@ -20,6 +21,10 @@ function ChatInputBox() {
   const [chatId, setChatId] = useState();
   const params = useSearchParams();
   const { user } = useUser();
+  const [loading, setLoading] = useState(false);
+  const { has } = useAuth();
+
+  // const paidUser = has({ plan: 'unlimited_plan' });
 
 
   useEffect(() => {
@@ -37,20 +42,26 @@ function ChatInputBox() {
 
   const handleSend = async () => {
     if (!userInput.trim()) return;
-
+    setLoading(true);
 
     //Call only if user is free
-    //deduct and check token limit
-    const result = await axios.post('/api/user-remaining-msg', {
-      token: 1
-    });
+
+    if (!has({ plan: 'unlimited_plan' })) {
 
 
-    const reminingToken = result?.data?.remainingToken;
-    if (reminingToken <= 0) {
-      console.log("Limit Exceed");
-      toast.error('Maximum daily limit reached')
-      return;
+      //deduct and check token limit
+      const result = await axios.post('/api/user-remaining-msg', {
+        token: 1
+      });
+
+
+      const remainingToken = result?.data?.remainingToken;
+      if (remainingToken <= 0) {
+        console.log("Limit Exceed");
+        toast.error('Maximum daily limit reached');
+        setLoading(false);
+        return;
+      }
     }
 
     // 1️⃣ Add user message to all enabled models

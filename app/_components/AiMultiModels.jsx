@@ -17,11 +17,12 @@ import { Button } from "@/components/ui/button";
 
 import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
 import { db } from "@/config/FirebaseConfig";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { doc, updateDoc } from "firebase/firestore";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from 'remark-gfm'
 import { useSearchParams } from "next/navigation";
+
 
 function AiMultiModels() {
     const { user } = useUser();
@@ -29,6 +30,7 @@ function AiMultiModels() {
 
     const { aiSelectedModels, setAiSelectedModels, messages, setMessages } = useContext(AiSelectedModelContext);
 
+    const { has } = useAuth();
 
 
     console.log("aiSelectedModels", aiSelectedModels);
@@ -120,6 +122,7 @@ function AiMultiModels() {
                         <div>
                             {model.enable ? <Switch
                                 checked={model.enable}
+                                disabled={model.premium}
                                 onCheckedChange={(v) => onToggleChange(model.model, v)}
                             />
                                 : <MessagesSquare onClick={() => onToggleChange(model.model, true)} />}
@@ -128,7 +131,7 @@ function AiMultiModels() {
                     {model.premium && model.enable && <div className="flex items-center justify-center h-full">
                         <Button><Lock />Upgrade to unlock</Button>
                     </div>}
-                    {model.enable && <div className="flex-1 p-4">
+                    {model.enable && (!model.premium )&&<div className="flex-1 p-4">
                         <div className="flex-1 p-4 space-y-2">
                             {messages[model.model]?.map((m, i) => (
                                 <div className={`p-2 rounded-md ${m.role == 'user' ?
